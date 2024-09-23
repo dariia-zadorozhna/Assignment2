@@ -34,7 +34,9 @@ class Triangle: public Figure {
 public:
 	int trigX, trigY, trigHeight;
 
-	Triangle(int coordinateX, int coordinateY, int Height) : trigX(coordinateX), trigY(coordinateY), trigHeight(Height) {}
+	string trigName;
+
+	Triangle(int coordinateX, int coordinateY, int Height) : trigX(coordinateX), trigY(coordinateY), trigHeight(Height), trigName("triangle") {}
 
 	void draw(Board& board) const override {
 		if (trigHeight <= 0) return;
@@ -66,7 +68,9 @@ class Square : public Figure {
 public:
 	int sqrX, sqrY, sqrSideLength;
 
-	Square(int coordinateX, int coordinateY, int sideLength) : sqrX(coordinateX), sqrY(coordinateY), sqrSideLength(sideLength) {}
+	string sqrName;
+
+	Square(int coordinateX, int coordinateY, int sideLength) : sqrX(coordinateX), sqrY(coordinateY), sqrSideLength(sideLength), sqrName("square") {}
 
 	void draw(Board& board) const override {
 		for (int i = 0; i < sqrSideLength; ++i) {
@@ -86,7 +90,9 @@ class Rectangle : public Figure {
 public:
 	int rectX, rectY, rectWidth, rectHeight;
 
-	Rectangle(int coordinateX, int coordinateY, int width, int height) : rectX(coordinateX), rectY(coordinateY), rectWidth(width), rectHeight(height) {}
+	string rectName;
+
+	Rectangle(int coordinateX, int coordinateY, int width, int height) : rectX(coordinateX), rectY(coordinateY), rectWidth(width), rectHeight(height), rectName("rectangle") {}
 
 	void draw(Board& board) const override {
 		for (int i = 0; i < rectWidth; ++i) {
@@ -108,7 +114,9 @@ class Circle : public Figure {
 public:
 	int circX, circY, circRadius;
 
-	Circle(int coordinateX, int coordinateY, int radius) : circX(coordinateX), circY(coordinateY), circRadius(radius) {}
+	string circName;
+
+	Circle(int coordinateX, int coordinateY, int radius) : circX(coordinateX), circY(coordinateY), circRadius(radius), circName("circle") {}
 
 	void draw(Board& board) const override {
 		cout << "Drawing a circle\n";
@@ -122,10 +130,10 @@ public:
 	bool isNumeric(const std::string& str);
 private:
 	void printCommands();
-	void draw(Board& board);
-	void list();
+	void draw(Board& board); // 3 out of 4 figures done
+	void list(); // done
 	void shapes(); // done
-	void add();
+ // command add quite done, but not in separate function
 	void undo();
 	void clear();
 	void save();
@@ -150,7 +158,7 @@ bool System::isNumeric(const std::string& str) {
 	return true;
 }
 void System::shapes() {
-	cout << "Shapes:\n"
+	cout << "\nShapes:\n"
 		<< "triangle coordinates height\n"
 		<< "square coordinates sideLength\n"
 		<< "rectangle coordinates width height\n"
@@ -162,6 +170,27 @@ void System::draw(Board& board) {
 		pair.second->draw(board);
 	}
 	board.print();
+}
+
+void System::list() {
+	for (const auto& pair : figures) {
+		int id = pair.first;
+		const auto& figure = pair.second;
+
+		if (auto* circle = dynamic_cast<Circle*>(figure.get())) {
+			cout << id << " circle (" << circle->circX << ", " << circle->circY << ") radius " << circle->circRadius << endl;
+		}
+		else if (auto* square = dynamic_cast<Square*>(figure.get())) {
+			cout << id << " square (" << square->sqrX << ", " << square->sqrY << ") side length " << square->sqrSideLength << endl;
+		}
+		else if (auto* triangle = dynamic_cast<Triangle*>(figure.get())) {
+			cout << id << " triangle (" << triangle->trigX << ", " << triangle->trigY << ") height " << triangle->trigHeight << endl;
+		}
+		else if (auto* rectangle = dynamic_cast<Rectangle*>(figure.get())) {
+			cout << id << " rectangle (" << rectangle->rectX << ", " << rectangle->rectY << ") width " << rectangle->rectWidth << " height " << rectangle->rectHeight << endl;
+		}
+	}
+	cout << endl;
 }
 
 void System::run(Board& board) {
@@ -177,11 +206,12 @@ void System::run(Board& board) {
 		}
 		else if (command == "list")
 		{
-			//list();
+			list();
 		}
 		else if (command == "shapes")
 		{
 			shapes();
+			cout << endl;
 		}
 		else if (command == "add")
 		{
@@ -221,6 +251,7 @@ void System::run(Board& board) {
 					}
 				}
 			}
+			cout << "\nThe figure was added\n\n";
 		}
 		else if (command == "undo") {
 			//undo();
