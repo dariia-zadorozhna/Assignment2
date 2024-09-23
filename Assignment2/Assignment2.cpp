@@ -77,14 +77,14 @@ public:
 
 class System {
 public:
-	/*map<int, unique_ptr<Figure>> figures;*/
+	map<int, unique_ptr<Figure>> figures;
 	void run();
 	bool isNumeric(const std::string& str);
 private:
 	void printCommands();
 	void draw();
 	void list();
-	void shapes();
+	void shapes(); // done
 	void add();
 	void undo();
 	void clear();
@@ -94,6 +94,7 @@ private:
 	string command;
 	string figure;
 	string strX, strY;
+	int x, y = -1;
 	string triangleHeight, squareLength, rectangleWidth, rectangleHeight, circleRadius;
 	string filePath;
 };
@@ -125,11 +126,11 @@ void System::run() {
 		sss >> command;
 		if (command == "draw")
 		{
-			draw();
+			//draw();
 		}
 		else if (command == "list")
 		{
-			list();
+			//list();
 		}
 		else if (command == "shapes")
 		{
@@ -139,39 +140,54 @@ void System::run() {
 		{
 			sss >> figure >> strX >> strY;
 			if (isNumeric(strX) && isNumeric(strY)) {
-				int x = stoi(strX);
-				int y = stoi(strY);
+				x = stoi(strX);
+				y = stoi(strY);
 			}
-			if (figure == "triangle") {
-				sss >> triangleHeight;
-				// create triangle object and add it to the map with figures
-			}
-			else if (figure == "square") {
-				sss >> squareLength;
-				// create square object and add it to the map with figures
-			}
-			else if (figure == "rectangle") {
-				sss >> rectangleWidth >> rectangleHeight;
-				// create rectangle object and add it to the map with figures
-			}
-			else if (figure == "circle") {
-				sss >> circleRadius;
-				// create circle object and add it to the map with figures
+			if (x >= 0 && y >= 0) {
+				if (figure == "triangle") {
+					sss >> triangleHeight;
+					if (isNumeric(triangleHeight)) {
+						int intTrigHeight = stoi(triangleHeight);
+						figures[figures.size() + 1] = make_unique<Triangle>(x, y, intTrigHeight);
+					}
+				}
+				else if (figure == "square") {
+					sss >> squareLength;
+					if (isNumeric(squareLength)) {
+						int intSqrLength = stoi(squareLength);
+						figures[figures.size() + 1] = make_unique<Square>(x, y, intSqrLength);
+					}
+				}
+				else if (figure == "rectangle") {
+					sss >> rectangleWidth >> rectangleHeight;
+					if (isNumeric(rectangleWidth) && isNumeric(rectangleHeight)) {
+						int intRectWidth = stoi(rectangleWidth);
+						int intRectHeight = stoi(rectangleHeight);
+						figures[figures.size() + 1] = make_unique<Rectangle>(x, y, intRectWidth, intRectHeight);
+					}
+				}
+				else if (figure == "circle") {
+					sss >> circleRadius;
+					if (isNumeric(circleRadius)) {
+						int intCircRadius = stoi(circleRadius);
+						figures[figures.size() + 1] = make_unique<Circle>(x, y, intCircRadius);
+					}
+				}
 			}
 		}
 		else if (command == "undo") {
-			undo();
+			//undo();
 		}
 		else if (command == "clear") {
-			clear();
+			//clear();
 		}
 		else if (command == "save"){
 			sss >> filePath;
-			save();
+			//save();
 		}
 		else if (command == "load") {
 			sss >> filePath;
-			load();
+			//load();
 		}
 		else if (command == "exit") {
 			return;
@@ -198,6 +214,7 @@ void System::printCommands() {
 
 int main()
 {
-    std::cout << "Hello World!\n";
+	System system;
+	system.run();
 }
 
