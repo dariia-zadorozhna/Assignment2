@@ -133,8 +133,8 @@ private:
 	void draw(Board& board); // 3 out of 4 figures done
 	void list(); // done
 	void shapes(); // done
- // command add quite done, but not in separate function
-	void undo();
+ // command "add" quite done, but not in separate function
+	void undo(); // done
 	void clear();
 	void save();
 	void load();
@@ -191,6 +191,12 @@ void System::list() {
 		}
 	}
 	cout << endl;
+}
+
+void System::undo() {
+	int lastId = figures.size();
+	figures.erase(lastId);
+	cout << "The last added shape was removed from the blackboard\n\n";
 }
 
 void System::run(Board& board) {
@@ -254,7 +260,7 @@ void System::run(Board& board) {
 			cout << "\nThe figure was added\n\n";
 		}
 		else if (command == "undo") {
-			//undo();
+			undo();
 		}
 		else if (command == "clear") {
 			//clear();
