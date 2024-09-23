@@ -6,9 +6,78 @@
 #include <map>
 using namespace std;
 
+class Figure {
+public:
+	virtual void draw() const = 0;
+	virtual ~Figure() = default;
+};
+
+class Triangle: public Figure {
+public:
+	int trigX, trigY, trigHeight;
+
+	Triangle(int coordinateX, int coordinateY, int Height) : trigX(coordinateX), trigY(coordinateY), trigHeight(Height) {}
+
+	void draw() const override {
+		cout << "Drawing a triangle\n";
+	}
+};
+
+class Square : public Figure {
+public:
+	int sqrX, sqrY, sqrSideLength;
+
+	Square(int coordinateX, int coordinateY, int sideLength) : sqrX(coordinateX), sqrY(coordinateY), sqrSideLength(sideLength) {}
+
+	void draw() const override {
+		cout << "Drawing a square\n";
+	}
+};
+
+class Rectangle : public Figure {
+public:
+	int rectX, rectY, rectWidth, rectHeight;
+
+	Rectangle(int coordinateX, int coordinateY, int width, int height) : rectX(coordinateX), rectY(coordinateY), rectWidth(width), rectHeight(height) {}
+
+	void draw() const override {
+		cout << "Drawing a rectangle\n";
+	}
+};
+
+class Circle : public Figure {
+public:
+	int circX, circY, circRadius;
+
+	Circle(int coordinateX, int coordinateY, int radius) : circX(coordinateX), circY(coordinateY), circRadius(radius) {}
+
+	void draw() const override {
+		cout << "Drawing a circle\n";
+	}
+};
+
+class Board {
+private:
+	const int BOARD_WIDTH = 100;
+	const int BOARD_HEIGHT = 100;
+
+	Board() : grid(BOARD_HEIGHT, vector<char>(BOARD_WIDTH, ' ')) {}
+public:
+	vector<vector<char>> grid;
+
+	void print() {
+		for (auto& row : grid) {
+			for (char c : row) {
+				std::cout << c;
+			}
+			std::cout << "\n";
+		}
+	}
+};
+
 class System {
 public:
-	/*map<int, Figure> figures;*/
+	/*map<int, unique_ptr<Figure>> figures;*/
 	void run();
 	bool isNumeric(const std::string& str);
 private:
