@@ -135,7 +135,7 @@ private:
 	void shapes(); // done
  // command "add" quite done, but not in separate function
 	void undo(); // done
-	void clear();
+	void clear(Board& board); // done
 	void save();
 	void load();
 	string input;
@@ -197,6 +197,16 @@ void System::undo() {
 	int lastId = figures.size();
 	figures.erase(lastId);
 	cout << "The last added shape was removed from the blackboard\n\n";
+}
+
+void System::clear(Board& board) {
+	figures.clear();
+	for (int i = 0; i < board.BOARD_HEIGHT; ++i) {
+		for (int j = 0; j < board.BOARD_WIDTH; ++j) {
+			board.grid[i][j] = ' '; 
+		}
+	}
+	cout << "The blackboard was cleared\n\n";
 }
 
 void System::run(Board& board) {
@@ -263,7 +273,7 @@ void System::run(Board& board) {
 			undo();
 		}
 		else if (command == "clear") {
-			//clear();
+			clear(board);
 		}
 		else if (command == "save"){
 			sss >> filePath;
