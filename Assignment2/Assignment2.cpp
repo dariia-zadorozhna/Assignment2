@@ -6,65 +6,14 @@
 #include <map>
 using namespace std;
 
-class Figure {
-public:
-	virtual void draw() const = 0;
-	virtual ~Figure() = default;
-};
-
-class Triangle: public Figure {
-public:
-	int trigX, trigY, trigHeight;
-
-	Triangle(int coordinateX, int coordinateY, int Height) : trigX(coordinateX), trigY(coordinateY), trigHeight(Height) {}
-
-	void draw() const override {
-		cout << "Drawing a triangle\n";
-	}
-};
-
-class Square : public Figure {
-public:
-	int sqrX, sqrY, sqrSideLength;
-
-	Square(int coordinateX, int coordinateY, int sideLength) : sqrX(coordinateX), sqrY(coordinateY), sqrSideLength(sideLength) {}
-
-	void draw() const override {
-		cout << "Drawing a square\n";
-	}
-};
-
-class Rectangle : public Figure {
-public:
-	int rectX, rectY, rectWidth, rectHeight;
-
-	Rectangle(int coordinateX, int coordinateY, int width, int height) : rectX(coordinateX), rectY(coordinateY), rectWidth(width), rectHeight(height) {}
-
-	void draw() const override {
-		cout << "Drawing a rectangle\n";
-	}
-};
-
-class Circle : public Figure {
-public:
-	int circX, circY, circRadius;
-
-	Circle(int coordinateX, int coordinateY, int radius) : circX(coordinateX), circY(coordinateY), circRadius(radius) {}
-
-	void draw() const override {
-		cout << "Drawing a circle\n";
-	}
-};
-
 class Board {
-private:
-	const int BOARD_WIDTH = 100;
-	const int BOARD_HEIGHT = 100;
-
-	Board() : grid(BOARD_HEIGHT, vector<char>(BOARD_WIDTH, ' ')) {}
 public:
+	const int BOARD_WIDTH = 60;
+	const int BOARD_HEIGHT = 20;
+
 	vector<vector<char>> grid;
 
+	Board() : grid(BOARD_HEIGHT, vector<char>(BOARD_WIDTH, ' ')) {}
 	void print() {
 		for (auto& row : grid) {
 			for (char c : row) {
@@ -75,14 +24,105 @@ public:
 	}
 };
 
+class Figure {
+public:
+	virtual void draw(Board& board) const = 0;
+	virtual ~Figure() = default;
+};
+
+class Triangle: public Figure {
+public:
+	int trigX, trigY, trigHeight;
+
+	Triangle(int coordinateX, int coordinateY, int Height) : trigX(coordinateX), trigY(coordinateY), trigHeight(Height) {}
+
+	void draw(Board& board) const override {
+		if (trigHeight <= 0) return;
+		for (int i = 0; i < trigHeight; ++i) {
+			int leftMost = trigX - i; 
+			int rightMost = trigX + i; 
+			int posY = trigY + i; 
+			if (posY < board.BOARD_HEIGHT) {
+				if (leftMost >= 0 && leftMost < board.BOARD_WIDTH)
+				{
+					board.grid[posY][leftMost] = '*';
+				}
+				if (rightMost >= 0 && rightMost < board.BOARD_WIDTH && leftMost != rightMost)
+				{
+					board.grid[posY][rightMost] = '*';
+				}
+			}
+		}
+		for (int j = 0; j < 2 * trigHeight - 1; ++j) {
+			int baseX = trigX - trigHeight + 1 + j;
+			int baseY = trigY + trigHeight - 1;
+			if (baseX >= 0 && baseX < board.BOARD_WIDTH && baseY < board.BOARD_HEIGHT)
+				board.grid[baseY][baseX] = '*';
+		}
+	}
+};
+
+class Square : public Figure {
+public:
+	int sqrX, sqrY, sqrSideLength;
+
+	Square(int coordinateX, int coordinateY, int sideLength) : sqrX(coordinateX), sqrY(coordinateY), sqrSideLength(sideLength) {}
+
+	void draw(Board& board) const override {
+		for (int i = 0; i < sqrSideLength; ++i) {
+			if (sqrX + i < board.BOARD_WIDTH) {
+				board.grid[sqrY][sqrX + i] = '*';
+				board.grid[sqrY + sqrSideLength - 1][sqrX + i] = '*';
+			}
+			if (sqrY + i < board.BOARD_HEIGHT) {
+				board.grid[sqrY + i][sqrX] = '*'; 
+				board.grid[sqrY + i][sqrX + sqrSideLength - 1] = '*'; 
+			}
+		}
+	}
+};
+
+class Rectangle : public Figure {
+public:
+	int rectX, rectY, rectWidth, rectHeight;
+
+	Rectangle(int coordinateX, int coordinateY, int width, int height) : rectX(coordinateX), rectY(coordinateY), rectWidth(width), rectHeight(height) {}
+
+	void draw(Board& board) const override {
+		for (int i = 0; i < rectWidth; ++i) {
+			if (rectX + i < board.BOARD_WIDTH) {
+				board.grid[rectY][rectX + i] = '*';
+				board.grid[rectY + rectHeight - 1][rectX + i] = '*';
+			}
+		}
+		for (int j = 0; j < rectHeight; ++j) {
+			if (rectY + j < board.BOARD_HEIGHT) {
+				board.grid[rectY + j][rectX] = '*';
+				board.grid[rectY + j][rectX + rectWidth - 1] = '*';
+			}
+		}
+	}
+};
+
+class Circle : public Figure {
+public:
+	int circX, circY, circRadius;
+
+	Circle(int coordinateX, int coordinateY, int radius) : circX(coordinateX), circY(coordinateY), circRadius(radius) {}
+
+	void draw(Board& board) const override {
+		cout << "Drawing a circle\n";
+	}
+};
+
 class System {
 public:
 	map<int, unique_ptr<Figure>> figures;
-	void run();
+	void run(Board& board);
 	bool isNumeric(const std::string& str);
 private:
 	void printCommands();
-	void draw();
+	void draw(Board& board);
 	void list();
 	void shapes(); // done
 	void add();
@@ -117,7 +157,14 @@ void System::shapes() {
 		<< "circle coordinates radius\n";
 }
 
-void System::run() {
+void System::draw(Board& board) {
+	for (const auto& pair : figures) {
+		pair.second->draw(board);
+	}
+	board.print();
+}
+
+void System::run(Board& board) {
 	while (true)
 	{
 		printCommands();
@@ -126,7 +173,7 @@ void System::run() {
 		sss >> command;
 		if (command == "draw")
 		{
-			//draw();
+			draw(board);
 		}
 		else if (command == "list")
 		{
@@ -214,7 +261,8 @@ void System::printCommands() {
 
 int main()
 {
+	Board board;
 	System system;
-	system.run();
+	system.run(board);
 }
 
