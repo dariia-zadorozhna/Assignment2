@@ -236,7 +236,51 @@ void System::save() {
 		}
 	}
 	outFile.close();
-	cout << "Blackboard was saved to file: " << filePath << "\n\n";
+	cout << "Board was saved to file: " << filePath << "\n\n";
+}
+
+void System::load() {
+	ifstream infile(filePath);
+
+	if (!infile) {
+		cerr << "Error opening file for loading!" << endl;
+		return;
+	}
+
+	figures.clear();
+
+	string line;
+	while (getline(infile, line)) {
+		stringstream forLoad(line);
+		int id;
+		string shape;
+		int x, y;
+
+		forLoad >> id >> shape >> x >> y;
+
+		if (shape == "circle") {
+			int radius;
+			forLoad >> radius;
+			figures[id] = make_unique<Circle>(x, y, radius);
+		}
+		else if (shape == "square") {
+			int sideLength;
+			forLoad >> sideLength;
+			figures[id] = make_unique<Square>(x, y, sideLength);
+		}
+		else if (shape == "triangle") {
+			int height;
+			forLoad >> height;
+			figures[id] = make_unique<Triangle>(x, y, height);
+		}
+		else if (shape == "rectangle") {
+			int width, height;
+			forLoad >> width >> height;
+			figures[id] = make_unique<Rectangle>(x, y, width, height);
+		}
+	}
+	infile.close();
+	cout << "Board was loaded from " << filePath << endl;
 }
 
 void System::run(Board& board) {
@@ -311,7 +355,7 @@ void System::run(Board& board) {
 		}
 		else if (command == "load") {
 			sss >> filePath;
-			//load();
+			load();
 		}
 		else if (command == "exit") {
 			return;
