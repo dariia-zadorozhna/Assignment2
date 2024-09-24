@@ -117,10 +117,33 @@ class Circle : public Figure {
 public:
 	int circX, circY, circRadius;
 
-	Circle(int coordinateX, int coordinateY, int radius) : circX(coordinateX), circY(coordinateY), circRadius(radius){}
+	Circle(int coordinateX, int coordinateY, int radius) : circX(coordinateX), circY(coordinateY), circRadius(radius) {}
 
 	void draw(Board& board) const override {
-		
+		int x = 0;
+		int y = circRadius;
+		int p = 1 - circRadius; 
+
+		while (x <= y) {
+			if (circX + x < board.BOARD_WIDTH && circY + y < board.BOARD_HEIGHT) board.grid[circY + y][circX + x] = '*';
+			if (circX - x >= 0 && circY + y < board.BOARD_HEIGHT) board.grid[circY + y][circX - x] = '*';
+			if (circX + x < board.BOARD_WIDTH && circY - y >= 0) board.grid[circY - y][circX + x] = '*';
+			if (circX - x >= 0 && circY - y >= 0) board.grid[circY - y][circX - x] = '*';
+			if (circX + y < board.BOARD_WIDTH && circY + x < board.BOARD_HEIGHT) board.grid[circY + x][circX + y] = '*';
+			if (circX - y >= 0 && circY + x < board.BOARD_HEIGHT) board.grid[circY + x][circX - y] = '*';
+			if (circX + y < board.BOARD_WIDTH && circY - x >= 0) board.grid[circY - x][circX + y] = '*';
+			if (circX - y >= 0 && circY - x >= 0) board.grid[circY - x][circX - y] = '*';
+
+			x++;
+
+			if (p < 0) {
+				p += 2 * x + 1; 
+			}
+			else {
+				y--; 
+				p += 2 * (x - y) + 1; 
+			}
+		}
 	}
 };
 
@@ -138,7 +161,7 @@ private:
 	void undo(); // done
 	void clear(Board& board); // done
 	void save(); // done
-	void load();
+	void load(); // done
 	string input;
 	string command;
 	string figure;
