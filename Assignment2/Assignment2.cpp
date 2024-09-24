@@ -6,6 +6,15 @@
 #include <map>
 using namespace std;
 
+#define RESET   "\033[0m"
+#define RED     "\033[31m"      
+#define GREEN   "\033[32m"      
+#define YELLOW  "\033[33m"      
+#define BLUE    "\033[34m"      
+#define MAGENTA "\033[35m"      
+#define CYAN    "\033[36m"      
+#define WHITE   "\033[37m"  
+
 class Board {
 public:
 	const int BOARD_WIDTH = 60;
@@ -34,9 +43,7 @@ class Triangle: public Figure {
 public:
 	int trigX, trigY, trigHeight;
 
-	string trigName;
-
-	Triangle(int coordinateX, int coordinateY, int Height) : trigX(coordinateX), trigY(coordinateY), trigHeight(Height), trigName("triangle") {}
+	Triangle(int coordinateX, int coordinateY, int Height) : trigX(coordinateX), trigY(coordinateY), trigHeight(Height) {}
 
 	void draw(Board& board) const override {
 		if (trigHeight <= 0) return;
@@ -68,9 +75,7 @@ class Square : public Figure {
 public:
 	int sqrX, sqrY, sqrSideLength;
 
-	string sqrName;
-
-	Square(int coordinateX, int coordinateY, int sideLength) : sqrX(coordinateX), sqrY(coordinateY), sqrSideLength(sideLength), sqrName("square") {}
+	Square(int coordinateX, int coordinateY, int sideLength) : sqrX(coordinateX), sqrY(coordinateY), sqrSideLength(sideLength) {}
 
 	void draw(Board& board) const override {
 		for (int i = 0; i < sqrSideLength; ++i) {
@@ -90,9 +95,7 @@ class Rectangle : public Figure {
 public:
 	int rectX, rectY, rectWidth, rectHeight;
 
-	string rectName;
-
-	Rectangle(int coordinateX, int coordinateY, int width, int height) : rectX(coordinateX), rectY(coordinateY), rectWidth(width), rectHeight(height), rectName("rectangle") {}
+	Rectangle(int coordinateX, int coordinateY, int width, int height) : rectX(coordinateX), rectY(coordinateY), rectWidth(width), rectHeight(height){}
 
 	void draw(Board& board) const override {
 		for (int i = 0; i < rectWidth; ++i) {
@@ -114,12 +117,10 @@ class Circle : public Figure {
 public:
 	int circX, circY, circRadius;
 
-	string circName;
-
-	Circle(int coordinateX, int coordinateY, int radius) : circX(coordinateX), circY(coordinateY), circRadius(radius), circName("circle") {}
+	Circle(int coordinateX, int coordinateY, int radius) : circX(coordinateX), circY(coordinateY), circRadius(radius){}
 
 	void draw(Board& board) const override {
-		cout << "Drawing a circle\n";
+		
 	}
 };
 
@@ -136,7 +137,7 @@ private:
  // command "add" quite done, but not in separate function
 	void undo(); // done
 	void clear(Board& board); // done
-	void save();
+	void save(); // done
 	void load();
 	string input;
 	string command;
@@ -209,6 +210,35 @@ void System::clear(Board& board) {
 	cout << "The blackboard was cleared\n\n";
 }
 
+void System::save() {
+	ofstream outFile(filePath);
+
+	if (!outFile) {
+		cerr << "Error opening file for saving!" << endl;
+		return;
+	}
+
+	for (const auto& pair : figures) {
+		int id = pair.first;
+		const auto& figure = pair.second;
+
+		if (auto* circle = dynamic_cast<Circle*>(figure.get())) {
+			outFile << id << " circle " << circle->circX << " " << circle->circY << " " << circle->circRadius << "\n";
+		}
+		else if (auto* square = dynamic_cast<Square*>(figure.get())) {
+			outFile << id << " square " << square->sqrX << " " << square->sqrY << " " << square->sqrSideLength << "\n";
+		}
+		else if (auto* triangle = dynamic_cast<Triangle*>(figure.get())) {
+			outFile << id << " triangle " << triangle->trigX << " " << triangle->trigY << " " << triangle->trigHeight << "\n";
+		}
+		else if (auto* rectangle = dynamic_cast<Rectangle*>(figure.get())) {
+			outFile << id << " rectangle " << rectangle->rectX << " " << rectangle->rectY << " " << rectangle->rectWidth << " " << rectangle->rectHeight << "\n";
+		}
+	}
+	outFile.close();
+	cout << "Blackboard was saved to file: " << filePath << "\n\n";
+}
+
 void System::run(Board& board) {
 	while (true)
 	{
@@ -277,7 +307,7 @@ void System::run(Board& board) {
 		}
 		else if (command == "save"){
 			sss >> filePath;
-			//save();
+			save();
 		}
 		else if (command == "load") {
 			sss >> filePath;
