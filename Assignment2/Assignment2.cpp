@@ -31,6 +31,8 @@ public:
 	const int BOARD_WIDTH = 60;
 	const int BOARD_HEIGHT = 20;
 
+	int boardArea = BOARD_HEIGHT * BOARD_WIDTH;
+
 	vector<vector<ColoredChar>> grid;
 
 	Board() : grid(BOARD_HEIGHT, vector<ColoredChar>(BOARD_WIDTH, ColoredChar(' ', "white"))) {}
@@ -56,7 +58,7 @@ public:
 	int trigX, trigY, trigHeight;
 	string color;
 
-	Triangle(int coordinateX, int coordinateY, int Height, string Color) : trigX(coordinateX), trigY(coordinateY), trigHeight(Height), color(Color) {}
+	Triangle(int coordinateX, int coordinateY, double Height, string Color) : trigX(coordinateX), trigY(coordinateY), trigHeight(Height), color(Color) {}
 
 	void draw(Board& board) const override {
 		if (trigHeight <= 0) return;
@@ -89,7 +91,7 @@ public:
 	int sqrX, sqrY, sqrSideLength;
 	string color;
 
-	Square(int coordinateX, int coordinateY, int sideLength, string Color) : sqrX(coordinateX), sqrY(coordinateY), sqrSideLength(sideLength), color(Color) {}
+	Square(int coordinateX, int coordinateY, double sideLength, string Color) : sqrX(coordinateX), sqrY(coordinateY), sqrSideLength(sideLength), color(Color) {}
 
 	void draw(Board& board) const override {
 		for (int i = 0; i < sqrSideLength; ++i) {
@@ -110,7 +112,7 @@ public:
 	int rectX, rectY, rectWidth, rectHeight;
 	string color;
 
-	Rectangle(int coordinateX, int coordinateY, int width, int height, string Color) : rectX(coordinateX), rectY(coordinateY), rectWidth(width), rectHeight(height), color(Color) {}
+	Rectangle(int coordinateX, int coordinateY, double width, double height, string Color) : rectX(coordinateX), rectY(coordinateY), rectWidth(width), rectHeight(height), color(Color) {}
 
 	void draw(Board& board) const override {
 		for (int i = 0; i < rectWidth; ++i) {
@@ -133,7 +135,7 @@ public:
 	int circX, circY, circRadius;
 	string color;
 
-	Circle(int coordinateX, int coordinateY, int radius, string Color) : circX(coordinateX), circY(coordinateY), circRadius(radius), color(Color) {}
+	Circle(int coordinateX, int coordinateY, double radius, string Color) : circX(coordinateX), circY(coordinateY), circRadius(radius), color(Color) {}
 
 	void draw(Board& board) const override {
 		int x = 0;
@@ -178,6 +180,10 @@ private:
 	void clear(Board& board); // done
 	void save(); // done
 	void load(); // done
+	bool checkCircle(Board& board);
+	bool checkSquare(Board& board);
+	bool checkRectangle(Board& board);
+	bool checkTriangle(Board& board);
 	string input;
 	string command;
 	string figure;
@@ -186,7 +192,48 @@ private:
 	int x, y = -1;
 	string triangleHeight, squareLength, rectangleWidth, rectangleHeight, circleRadius;
 	string filePath;
+	double doubleTrigHeight, doubleCircRadius, doubleRectWidth, doubleRectHeight, doubleSqrLength;
 };
+
+bool System::checkTriangle(Board& board) {
+	double trigArea = doubleTrigHeight * doubleTrigHeight/2;
+	if (board.boardArea <= trigArea) {
+		return false;
+	}
+	else {
+		return true;
+	}
+}
+
+bool System::checkCircle(Board& board) {
+	double circArea = doubleCircRadius * doubleCircRadius * 22 / 7;
+	if (board.boardArea <= circArea) {
+		return false;
+	}
+	else {
+		return true;
+	}
+}
+
+bool System::checkSquare(Board& board) {
+	double sqrArea = doubleSqrLength*doubleSqrLength;
+	if (board.boardArea <= sqrArea) {
+		return false;
+	}
+	else {
+		return true;
+	}
+}
+
+bool System::checkRectangle(Board& board) {
+	double rectArea = doubleRectHeight*doubleRectWidth;
+	if (board.boardArea <= rectArea) {
+		return false;
+	}
+	else {
+		return true;
+	}
+}
 
 bool System::isNumeric(const std::string& str) {
 	if (str.empty()) return false;
@@ -263,16 +310,16 @@ void System::save() {
 		const auto& figure = pair.second;
 
 		if (auto* circle = dynamic_cast<Circle*>(figure.get())) {
-			outFile << id << " circle " << circle->circX << " " << circle->circY << " " << circle->circRadius << circle->color << "\n";
+			outFile << id << " circle " << circle->circX << " " << circle->circY << " " << circle->circRadius << " " << circle->color << "\n";
 		}
 		else if (auto* square = dynamic_cast<Square*>(figure.get())) {
-			outFile << id << " square " << square->sqrX << " " << square->sqrY << " " << square->sqrSideLength << square->color << "\n";
+			outFile << id << " square " << square->sqrX << " " << square->sqrY << " " << square->sqrSideLength << " " << square->color << "\n";
 		}
 		else if (auto* triangle = dynamic_cast<Triangle*>(figure.get())) {
-			outFile << id << " triangle " << triangle->trigX << " " << triangle->trigY << " " << triangle->trigHeight << triangle->color << "\n";
+			outFile << id << " triangle " << triangle->trigX << " " << triangle->trigY << " " << triangle->trigHeight << " " << triangle->color << "\n";
 		}
 		else if (auto* rectangle = dynamic_cast<Rectangle*>(figure.get())) {
-			outFile << id << " rectangle " << rectangle->rectX << " " << rectangle->rectY << " " << rectangle->rectWidth << " " << rectangle->rectHeight << rectangle->color << "\n";
+			outFile << id << " rectangle " << rectangle->rectX << " " << rectangle->rectY << " " << rectangle->rectWidth << " " << rectangle->rectHeight << " " << rectangle->color << "\n";
 		}
 	}
 	outFile.close();
@@ -354,34 +401,73 @@ void System::run(Board& board) {
 				if (figure == "triangle") {
 					sss >> triangleHeight >> color;
 					if (isNumeric(triangleHeight)) {
-						int intTrigHeight = stoi(triangleHeight);
-						figures[figures.size() + 1] = make_unique<Triangle>(x, y, intTrigHeight, color);
+						doubleTrigHeight = stoi(triangleHeight);
+						if (checkTriangle(board)==true) {
+							figures[figures.size() + 1] = make_unique<Triangle>(x, y, doubleTrigHeight, color);
+							cout << "\nThe figure was added\n\n";
+						}
+						else {
+							cout << "\nThe figure is bigger than the board:(\n\n";
+						}
+					}
+					else {
+						cout << "\nThe input is incorrect!\n\n";
 					}
 				}
 				else if (figure == "square") {
 					sss >> squareLength >> color;
 					if (isNumeric(squareLength)) {
-						int intSqrLength = stoi(squareLength);
-						figures[figures.size() + 1] = make_unique<Square>(x, y, intSqrLength, color);
+						doubleSqrLength = stoi(squareLength);
+						if (checkSquare(board) == true) {
+							figures[figures.size() + 1] = make_unique<Square>(x, y, doubleSqrLength, color);
+							cout << "\nThe figure was added\n\n";
+						}
+						else {
+							cout << "\nThe figure is bigger than the board:(\n\n";
+						}
+					}
+					else {
+						cout << "\nThe input is incorrect!\n\n";
 					}
 				}
 				else if (figure == "rectangle") {
 					sss >> rectangleWidth >> rectangleHeight >> color;
 					if (isNumeric(rectangleWidth) && isNumeric(rectangleHeight)) {
-						int intRectWidth = stoi(rectangleWidth);
-						int intRectHeight = stoi(rectangleHeight);
-						figures[figures.size() + 1] = make_unique<Rectangle>(x, y, intRectWidth, intRectHeight, color);
+						doubleRectWidth = stoi(rectangleWidth);
+						doubleRectHeight = stoi(rectangleHeight);
+						if (checkRectangle(board) == true)
+							{
+								figures[figures.size() + 1] = make_unique<Rectangle>(x, y, doubleRectWidth, doubleRectHeight, color);
+								cout << "\nThe figure was added\n\n";
+							}
+						else {
+							cout << "\nThe figure is bigger than the board:(\n\n";
+						}
+					}
+					else {
+						cout << "\nThe input is incorrect!\n\n";
 					}
 				}
 				else if (figure == "circle") {
 					sss >> circleRadius >> color;
 					if (isNumeric(circleRadius)) {
-						int intCircRadius = stoi(circleRadius);
-						figures[figures.size() + 1] = make_unique<Circle>(x, y, intCircRadius, color);
+						doubleCircRadius = stoi(circleRadius);
+						if (checkCircle(board) == true) {
+							figures[figures.size() + 1] = make_unique<Circle>(x, y, doubleCircRadius, color);
+							cout << "\nThe figure was added\n\n";
+						}
+						else {
+							cout << "\nThe figure is bigger than the board:(\n\n";
+						}
+					}
+					else {
+						cout << "\nThe input is incorrect!\n\n";
 					}
 				}
 			}
-			cout << "\nThe figure was added\n\n";
+			else {
+				cout << "\nThe input is incorrect\n\n";
+			}
 		}
 		else if (command == "undo") {
 			undo();
@@ -401,7 +487,7 @@ void System::run(Board& board) {
 			return;
 		}
 		else {
-			cout << "The input is wrong!\n";
+			cout << "The input is wrong!\n\n";
 		}
 
     }
