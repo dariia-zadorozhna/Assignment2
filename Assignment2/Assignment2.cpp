@@ -184,6 +184,7 @@ private:
 	bool checkSquare(Board& board);
 	bool checkRectangle(Board& board);
 	bool checkTriangle(Board& board);
+	bool isFigureNew();
 	string input;
 	string command;
 	string figure;
@@ -194,6 +195,43 @@ private:
 	string filePath;
 	double doubleTrigHeight, doubleCircRadius, doubleRectWidth, doubleRectHeight, doubleSqrLength;
 };
+
+bool System::isFigureNew() {
+	for (const auto& pair : figures) {
+		const auto& fig = pair.second;
+
+		if (figure == "triangle") {
+			if (auto* triangle = dynamic_cast<Triangle*>(fig.get())) {
+				if (triangle->trigX == x && triangle->trigY == y && triangle->trigHeight == doubleTrigHeight && triangle->color == color) {
+					return false;
+				}
+			}
+		}
+		else if (figure == "square") {
+			if (auto* square = dynamic_cast<Square*>(fig.get())) {
+				if (square->sqrX == x && square->sqrY == y && square->sqrSideLength == doubleSqrLength && square->color == color) {
+					return false;
+				}
+			}
+		}
+		else if (figure == "rectangle") {
+			if (auto* rectangle = dynamic_cast<Rectangle*>(fig.get())) {
+				if (rectangle->rectX == x && rectangle->rectY == y && rectangle->rectWidth == doubleRectWidth && rectangle->rectHeight == doubleRectHeight && rectangle->color == color) {
+					return false;
+				}
+			}
+		}
+		else if (figure == "circle") {
+			if (auto* circle = dynamic_cast<Circle*>(fig.get())) {
+				if (circle->circX == x && circle->circY == y && circle->circRadius == doubleCircRadius && circle->color == color) {
+					return false;
+				}
+			}
+		}
+	}
+	return true;
+}
+
 
 bool System::checkTriangle(Board& board) {
 	double trigArea = doubleTrigHeight * doubleTrigHeight/2;
@@ -245,6 +283,7 @@ bool System::isNumeric(const std::string& str) {
 	}
 	return true;
 }
+
 void System::shapes() {
 	cout << "\nShapes:\n"
 		<< "triangle coordinates height\n"
@@ -400,14 +439,14 @@ void System::run(Board& board) {
 			if (x >= 0 && y >= 0) {
 				if (figure == "triangle") {
 					sss >> triangleHeight >> color;
-					if (isNumeric(triangleHeight)) {
+					if (isNumeric(triangleHeight) && isFigureNew()) {
 						doubleTrigHeight = stoi(triangleHeight);
-						if (checkTriangle(board)==true) {
+						if (checkTriangle(board)) {
 							figures[figures.size() + 1] = make_unique<Triangle>(x, y, doubleTrigHeight, color);
 							cout << "\nThe figure was added\n\n";
 						}
 						else {
-							cout << "\nThe figure is bigger than the board:(\n\n";
+							cout << "\nThe figure is bigger than the board or the figure was already added:(\n\n";
 						}
 					}
 					else {
@@ -418,12 +457,12 @@ void System::run(Board& board) {
 					sss >> squareLength >> color;
 					if (isNumeric(squareLength)) {
 						doubleSqrLength = stoi(squareLength);
-						if (checkSquare(board) == true) {
+						if (checkSquare(board) && isFigureNew()) {
 							figures[figures.size() + 1] = make_unique<Square>(x, y, doubleSqrLength, color);
 							cout << "\nThe figure was added\n\n";
 						}
 						else {
-							cout << "\nThe figure is bigger than the board:(\n\n";
+							cout << "\nThe figure is bigger than the board or the figure was already added:(\n\n";
 						}
 					}
 					else {
@@ -435,13 +474,13 @@ void System::run(Board& board) {
 					if (isNumeric(rectangleWidth) && isNumeric(rectangleHeight)) {
 						doubleRectWidth = stoi(rectangleWidth);
 						doubleRectHeight = stoi(rectangleHeight);
-						if (checkRectangle(board) == true)
+						if (checkRectangle(board) && isFigureNew())
 							{
 								figures[figures.size() + 1] = make_unique<Rectangle>(x, y, doubleRectWidth, doubleRectHeight, color);
 								cout << "\nThe figure was added\n\n";
 							}
 						else {
-							cout << "\nThe figure is bigger than the board:(\n\n";
+							cout << "\nThe figure is bigger than the board or the figure was already added:(\n\n";
 						}
 					}
 					else {
@@ -452,12 +491,12 @@ void System::run(Board& board) {
 					sss >> circleRadius >> color;
 					if (isNumeric(circleRadius)) {
 						doubleCircRadius = stoi(circleRadius);
-						if (checkCircle(board) == true) {
+						if (checkCircle(board) && isFigureNew()) {
 							figures[figures.size() + 1] = make_unique<Circle>(x, y, doubleCircRadius, color);
 							cout << "\nThe figure was added\n\n";
 						}
 						else {
-							cout << "\nThe figure is bigger than the board:(\n\n";
+							cout << "\nThe figure is bigger than the board or the figure was already added:(\n\n";
 						}
 					}
 					else {
