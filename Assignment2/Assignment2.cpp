@@ -50,6 +50,7 @@ public:
 class Figure {
 public:
 	virtual void draw(Board& board) const = 0;
+	virtual void getFigure(int id) const = 0;
 	virtual ~Figure() = default;
 };
 
@@ -84,6 +85,11 @@ public:
 				board.grid[baseY][baseX] = ColoredChar('*', color);
 		}
 	}
+
+	void getFigure(int id) const override {
+		cout << id << " triangle (" << trigX << ", " << trigY << ") height " << trigHeight << " " << color << endl;
+	}
+
 };
 
 class Square : public Figure {
@@ -104,6 +110,9 @@ public:
 				board.grid[sqrY + i][sqrX + sqrSideLength - 1] = ColoredChar('*', color);
 			}
 		}
+	}
+	void getFigure(int id) const override {
+		cout << id << " square (" << sqrX << ", " << sqrY << ") side length " << sqrSideLength << " " << color << endl;
 	}
 };
 
@@ -127,6 +136,10 @@ public:
 				board.grid[rectY + j][rectX + rectWidth - 1] = ColoredChar('*', color);
 			}
 		}
+	}
+
+	void getFigure(int id) const override {
+		cout << id << " rectangle (" << rectX << ", " << rectY << ") width " << rectWidth << " height " << rectHeight << " " << color << endl;
 	}
 };
 
@@ -163,6 +176,10 @@ public:
 			}
 		}
 	}
+
+	void getFigure(int id) const override {
+		cout << id << " circle (" << circX << ", " << circY << ") radius " << circRadius << " " << color << endl;
+	}
 };
 
 class System {
@@ -176,21 +193,24 @@ private:
 	void list(); // done
 	void shapes(); // done
  // command "add" quite done, but not in separate function
-	void undo(); // done
+	void undo(Board& board); // done
 	void clear(Board& board); // done
 	void save(); // done
 	void load(); // done
+	void paint();
 	bool checkCircle(Board& board);
 	bool checkSquare(Board& board);
 	bool checkRectangle(Board& board);
 	bool checkTriangle(Board& board);
 	bool isFigureNew();
+	void cleanData();
 	string input;
 	string command;
 	string figure;
 	string strX, strY;
 	string color;
 	int x, y = -1;
+	int ID;
 	string triangleHeight, squareLength, rectangleWidth, rectangleHeight, circleRadius;
 	string filePath;
 	double doubleTrigHeight, doubleCircRadius, doubleRectWidth, doubleRectHeight, doubleSqrLength;
@@ -232,6 +252,11 @@ bool System::isFigureNew() {
 	return true;
 }
 
+void System::cleanData() {
+	x = y = -1;
+	color = "";
+	triangleHeight = squareLength = rectangleWidth = rectangleHeight = circleRadius = "";
+}
 
 bool System::checkTriangle(Board& board) {
 	double trigArea = doubleTrigHeight * doubleTrigHeight/2;
@@ -286,10 +311,10 @@ bool System::isNumeric(const std::string& str) {
 
 void System::shapes() {
 	cout << "\nShapes:\n"
-		<< "triangle coordinates height\n"
-		<< "square coordinates sideLength\n"
-		<< "rectangle coordinates width height\n"
-		<< "circle coordinates radius\n";
+		<< "triangle coordinates height (color)\n"
+		<< "square coordinates sideLength (color)\n"
+		<< "rectangle coordinates width height (color)\n"
+		<< "circle coordinates radius (color)\n";
 }
 
 void System::draw(Board& board) {
@@ -304,25 +329,19 @@ void System::list() {
 		int id = pair.first;
 		const auto& figure = pair.second;
 
-		if (auto* circle = dynamic_cast<Circle*>(figure.get())) {
-			cout << id << " circle (" << circle->circX << ", " << circle->circY << ") radius " << circle->circRadius << " color " << circle->color << endl;
-		}
-		else if (auto* square = dynamic_cast<Square*>(figure.get())) {
-			cout << id << " square (" << square->sqrX << ", " << square->sqrY << ") side length " << square->sqrSideLength << " color " << square->color << endl;
-		}
-		else if (auto* triangle = dynamic_cast<Triangle*>(figure.get())) {
-			cout << id << " triangle (" << triangle->trigX << ", " << triangle->trigY << ") height " << triangle->trigHeight << " color " << triangle->color << endl;
-		}
-		else if (auto* rectangle = dynamic_cast<Rectangle*>(figure.get())) {
-			cout << id << " rectangle (" << rectangle->rectX << ", " << rectangle->rectY << ") width " << rectangle->rectWidth << " height " << rectangle->rectHeight << " color " << rectangle->color << endl;
-		}
+		figure->getFigure(id);
 	}
 	cout << endl;
 }
 
-void System::undo() {
+void System::undo(Board& board) {
 	int lastId = figures.size();
 	figures.erase(lastId);
+	for (int i = 0; i < board.BOARD_HEIGHT; ++i) {
+		for (int j = 0; j < board.BOARD_WIDTH; ++j) {
+			board.grid[i][j] = ColoredChar(' ', "white");
+		}
+	}
 	cout << "The last added shape was removed from the blackboard\n\n";
 }
 
@@ -407,6 +426,10 @@ void System::load() {
 	}
 	infile.close();
 	cout << "Board was loaded from " << filePath << endl;
+}
+
+void System::paint() {
+
 }
 
 void System::run(Board& board) {
@@ -507,9 +530,10 @@ void System::run(Board& board) {
 			else {
 				cout << "\nThe input is incorrect\n\n";
 			}
+			cleanData();
 		}
 		else if (command == "undo") {
-			undo();
+			undo(board);
 		}
 		else if (command == "clear") {
 			clear(board);
@@ -521,6 +545,33 @@ void System::run(Board& board) {
 		else if (command == "load") {
 			sss >> filePath;
 			load();
+		}
+		else if (command == "select"){
+			sss >> strX >> strY;
+			if (strY == "") {
+				if (isNumeric(strX)) {
+					ID = stoi(strX);
+
+					for (const auto& pair : figures) {
+						if (pair.first == ID) {
+							pair.second->getFigure(ID);
+						}
+					}
+				}
+			}
+			else{
+				if (isNumeric(strX) && isNumeric(strY)) {
+					x = stoi(strX); 
+					y = stoi(strY);
+				}
+				for (auto it = figures.rbegin(); it != figures.rend(); ++it) {
+					const auto& figure = it->second;
+					// logic to ckeck points
+				}
+			}
+		}
+		else if (command == "paint") {
+			//paint();
 		}
 		else if (command == "exit") {
 			return;
@@ -542,6 +593,7 @@ void System::printCommands() {
 		<< "clear - to remove all shapes from blackboard\n"
 		<< "save - to save the blackboard to the file\n"
 		<< "load - to load the blackboard from the file\n"
+		<< "paint - to paint the selected shape\n"
 		<< "exit - to leave\n\n";
 }
 
