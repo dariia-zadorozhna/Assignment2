@@ -192,7 +192,7 @@ private:
 	void draw(Board& board); // 4 figures done
 	void list(); // done
 	void shapes(); // done
- // command "add" quite done, but not in separate function
+	void add(Board& board, stringstream& sss);
 	void undo(Board& board); // done
 	void clear(Board& board); // done
 	void save(); // done
@@ -355,6 +355,86 @@ void System::clear(Board& board) {
 	cout << "The blackboard was cleared\n\n";
 }
 
+void System::add(Board& board, stringstream& sss) {
+	sss >> figure >> strX >> strY;
+	if (isNumeric(strX) && isNumeric(strY)) {
+		x = stoi(strX);
+		y = stoi(strY);
+	}
+	if (x >= 0 && y >= 0) {
+		if (figure == "triangle") {
+			sss >> triangleHeight >> color;
+			if (isNumeric(triangleHeight) && isFigureNew()) {
+				doubleTrigHeight = stoi(triangleHeight);
+				if (checkTriangle(board)) {
+					figures[figures.size() + 1] = make_unique<Triangle>(x, y, doubleTrigHeight, color);
+					cout << "\nThe figure was added\n\n";
+				}
+				else {
+					cout << "\nThe figure is bigger than the board or the figure was already added:(\n\n";
+				}
+			}
+			else {
+				cout << "\nThe input is incorrect!\n\n";
+			}
+		}
+		else if (figure == "square") {
+			sss >> squareLength >> color;
+			if (isNumeric(squareLength)) {
+				doubleSqrLength = stoi(squareLength);
+				if (checkSquare(board) && isFigureNew()) {
+					figures[figures.size() + 1] = make_unique<Square>(x, y, doubleSqrLength, color);
+					cout << "\nThe figure was added\n\n";
+				}
+				else {
+					cout << "\nThe figure is bigger than the board or the figure was already added:(\n\n";
+				}
+			}
+			else {
+				cout << "\nThe input is incorrect!\n\n";
+			}
+		}
+		else if (figure == "rectangle") {
+			sss >> rectangleWidth >> rectangleHeight >> color;
+			if (isNumeric(rectangleWidth) && isNumeric(rectangleHeight)) {
+				doubleRectWidth = stoi(rectangleWidth);
+				doubleRectHeight = stoi(rectangleHeight);
+				if (checkRectangle(board) && isFigureNew())
+				{
+					figures[figures.size() + 1] = make_unique<Rectangle>(x, y, doubleRectWidth, doubleRectHeight, color);
+					cout << "\nThe figure was added\n\n";
+				}
+				else {
+					cout << "\nThe figure is bigger than the board or the figure was already added:(\n\n";
+				}
+			}
+			else {
+				cout << "\nThe input is incorrect!\n\n";
+			}
+		}
+		else if (figure == "circle") {
+			sss >> circleRadius >> color;
+			if (isNumeric(circleRadius)) {
+				doubleCircRadius = stoi(circleRadius);
+				if (checkCircle(board) && isFigureNew()) {
+					figures[figures.size() + 1] = make_unique<Circle>(x, y, doubleCircRadius, color);
+					cout << "\nThe figure was added\n\n";
+				}
+				else {
+					cout << "\nThe figure is bigger than the board or the figure was already added:(\n\n";
+				}
+			}
+			else {
+				cout << "\nThe input is incorrect!\n\n";
+			}
+		}
+	}
+	else {
+		cout << "\nThe input is incorrect\n\n";
+	}
+	cleanData();
+}
+
 void System::save() {
 	ofstream outFile(filePath);
 
@@ -454,83 +534,7 @@ void System::run(Board& board) {
 		}
 		else if (command == "add")
 		{
-			sss >> figure >> strX >> strY;
-			if (isNumeric(strX) && isNumeric(strY)) {
-				x = stoi(strX);
-				y = stoi(strY);
-			}
-			if (x >= 0 && y >= 0) {
-				if (figure == "triangle") {
-					sss >> triangleHeight >> color;
-					if (isNumeric(triangleHeight) && isFigureNew()) {
-						doubleTrigHeight = stoi(triangleHeight);
-						if (checkTriangle(board)) {
-							figures[figures.size() + 1] = make_unique<Triangle>(x, y, doubleTrigHeight, color);
-							cout << "\nThe figure was added\n\n";
-						}
-						else {
-							cout << "\nThe figure is bigger than the board or the figure was already added:(\n\n";
-						}
-					}
-					else {
-						cout << "\nThe input is incorrect!\n\n";
-					}
-				}
-				else if (figure == "square") {
-					sss >> squareLength >> color;
-					if (isNumeric(squareLength)) {
-						doubleSqrLength = stoi(squareLength);
-						if (checkSquare(board) && isFigureNew()) {
-							figures[figures.size() + 1] = make_unique<Square>(x, y, doubleSqrLength, color);
-							cout << "\nThe figure was added\n\n";
-						}
-						else {
-							cout << "\nThe figure is bigger than the board or the figure was already added:(\n\n";
-						}
-					}
-					else {
-						cout << "\nThe input is incorrect!\n\n";
-					}
-				}
-				else if (figure == "rectangle") {
-					sss >> rectangleWidth >> rectangleHeight >> color;
-					if (isNumeric(rectangleWidth) && isNumeric(rectangleHeight)) {
-						doubleRectWidth = stoi(rectangleWidth);
-						doubleRectHeight = stoi(rectangleHeight);
-						if (checkRectangle(board) && isFigureNew())
-							{
-								figures[figures.size() + 1] = make_unique<Rectangle>(x, y, doubleRectWidth, doubleRectHeight, color);
-								cout << "\nThe figure was added\n\n";
-							}
-						else {
-							cout << "\nThe figure is bigger than the board or the figure was already added:(\n\n";
-						}
-					}
-					else {
-						cout << "\nThe input is incorrect!\n\n";
-					}
-				}
-				else if (figure == "circle") {
-					sss >> circleRadius >> color;
-					if (isNumeric(circleRadius)) {
-						doubleCircRadius = stoi(circleRadius);
-						if (checkCircle(board) && isFigureNew()) {
-							figures[figures.size() + 1] = make_unique<Circle>(x, y, doubleCircRadius, color);
-							cout << "\nThe figure was added\n\n";
-						}
-						else {
-							cout << "\nThe figure is bigger than the board or the figure was already added:(\n\n";
-						}
-					}
-					else {
-						cout << "\nThe input is incorrect!\n\n";
-					}
-				}
-			}
-			else {
-				cout << "\nThe input is incorrect\n\n";
-			}
-			cleanData();
+			add(board, sss);
 		}
 		else if (command == "undo") {
 			undo(board);
