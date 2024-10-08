@@ -50,7 +50,9 @@ public:
 class Figure {
 public:
 	virtual void draw(Board& board) const = 0;
+	virtual void drawFilled(Board& board) const = 0;
 	virtual void getFigure(int id) const = 0;
+	virtual bool getFilledState() const = 0;
 	virtual ~Figure() = default;
 };
 
@@ -58,8 +60,9 @@ class Triangle: public Figure {
 public:
 	int trigX, trigY, trigHeight;
 	string color;
+	bool fill = false;
 
-	Triangle(int coordinateX, int coordinateY, double Height, string Color) : trigX(coordinateX), trigY(coordinateY), trigHeight(Height), color(Color) {}
+	Triangle(int coordinateX, int coordinateY, double Height, string Color, bool Fill) : trigX(coordinateX), trigY(coordinateY), trigHeight(Height), color(Color), fill(Fill) {}
 
 	void draw(Board& board) const override {
 		if (trigHeight <= 0) return;
@@ -86,8 +89,40 @@ public:
 		}
 	}
 
+	void drawFilled(Board& board) const override {
+		if (trigHeight <= 0) return; 
+
+		for (int i = 0; i < trigHeight; ++i) {
+			int leftMost = trigX - i;
+			int rightMost = trigX + i;
+			int posY = trigY + i;
+
+			if (posY < board.BOARD_HEIGHT) {
+				for (int x = leftMost; x <= rightMost; ++x) {
+					if (x >= 0 && x < board.BOARD_WIDTH) {
+						board.grid[posY][x] = ColoredChar('*', color);
+					}
+				}
+			}
+		}
+
+		int baseY = trigY + trigHeight - 1;
+		if (baseY < board.BOARD_HEIGHT) {
+			for (int j = 0; j < 2 * trigHeight - 1; ++j) {
+				int baseX = trigX - trigHeight + 1 + j;
+				if (baseX >= 0 && baseX < board.BOARD_WIDTH) {
+					board.grid[baseY][baseX] = ColoredChar('*', color);
+				}
+			}
+		}
+	}
+
 	void getFigure(int id) const override {
 		cout << id << " triangle (" << trigX << ", " << trigY << ") height " << trigHeight << " " << color << endl;
+	}
+
+	bool getFilledState() const override {
+		return fill;
 	}
 
 };
@@ -96,8 +131,9 @@ class Square : public Figure {
 public:
 	int sqrX, sqrY, sqrSideLength;
 	string color;
+	bool fill;
 
-	Square(int coordinateX, int coordinateY, double sideLength, string Color) : sqrX(coordinateX), sqrY(coordinateY), sqrSideLength(sideLength), color(Color) {}
+	Square(int coordinateX, int coordinateY, double sideLength, string Color, bool Fill) : sqrX(coordinateX), sqrY(coordinateY), sqrSideLength(sideLength), color(Color), fill(Fill) {}
 
 	void draw(Board& board) const override {
 		for (int i = 0; i < sqrSideLength; ++i) {
@@ -111,8 +147,23 @@ public:
 			}
 		}
 	}
+
+	void drawFilled(Board& board) const override {
+		for (int i = 0; i < sqrSideLength; ++i) {
+			for (int j = 0; j < sqrSideLength; ++j) {
+				if ((sqrX + j < board.BOARD_WIDTH) && (sqrY + i < board.BOARD_HEIGHT)) {
+					board.grid[sqrY + i][sqrX + j] = ColoredChar('*', color);
+				}
+			}
+		}
+	}
+
 	void getFigure(int id) const override {
 		cout << id << " square (" << sqrX << ", " << sqrY << ") side length " << sqrSideLength << " " << color << endl;
+	}
+
+	bool getFilledState() const override {
+		return fill;
 	}
 };
 
@@ -120,8 +171,9 @@ class Rectangle : public Figure {
 public:
 	int rectX, rectY, rectWidth, rectHeight;
 	string color;
+	bool fill;
 
-	Rectangle(int coordinateX, int coordinateY, double width, double height, string Color) : rectX(coordinateX), rectY(coordinateY), rectWidth(width), rectHeight(height), color(Color) {}
+	Rectangle(int coordinateX, int coordinateY, double width, double height, string Color, bool Fill) : rectX(coordinateX), rectY(coordinateY), rectWidth(width), rectHeight(height), color(Color), fill(Fill){}
 
 	void draw(Board& board) const override {
 		for (int i = 0; i < rectWidth; ++i) {
@@ -138,8 +190,22 @@ public:
 		}
 	}
 
+	void drawFilled(Board& board) const override {
+		for (int j = 0; j < rectHeight; ++j) {
+			for (int i = 0; i < rectWidth; ++i) {
+				if ((rectX + i < board.BOARD_WIDTH) && (rectY + j < board.BOARD_HEIGHT)) {
+					board.grid[rectY + j][rectX + i] = ColoredChar('*', color);
+				}
+			}
+		}
+	}
+
 	void getFigure(int id) const override {
 		cout << id << " rectangle (" << rectX << ", " << rectY << ") width " << rectWidth << " height " << rectHeight << " " << color << endl;
+	}
+
+	bool getFilledState() const override {
+		return fill;
 	}
 };
 
@@ -147,8 +213,9 @@ class Circle : public Figure {
 public:
 	int circX, circY, circRadius;
 	string color;
+	bool fill;
 
-	Circle(int coordinateX, int coordinateY, double radius, string Color) : circX(coordinateX), circY(coordinateY), circRadius(radius), color(Color) {}
+	Circle(int coordinateX, int coordinateY, double radius, string Color, bool Fill) : circX(coordinateX), circY(coordinateY), circRadius(radius), color(Color), fill(Fill) {}
 
 	void draw(Board& board) const override {
 		int x = 0;
@@ -177,8 +244,49 @@ public:
 		}
 	}
 
+	void drawFilled(Board& board) const override {
+		int x = 0;
+		int y = circRadius;
+		int p = 1 - circRadius;
+
+		while (x <= y) {
+			for (int i = -x; i <= x; ++i) {
+				if (circY + y < board.BOARD_HEIGHT) {
+					if (circX + i < board.BOARD_WIDTH && circX + i >= 0) {
+						board.grid[circY + y][circX + i] = ColoredChar('*', color);
+					}
+					if (circX + i < board.BOARD_WIDTH && circX + i >= 0) {
+						board.grid[circY - y][circX + i] = ColoredChar('*', color);
+					}
+				}
+			}
+			for (int i = -y; i <= y; ++i) {
+				if (circY + x < board.BOARD_HEIGHT) {
+					if (circX + i < board.BOARD_WIDTH && circX + i >= 0) {
+						board.grid[circY + x][circX + i] = ColoredChar('*', color);
+					}
+					if (circX + i < board.BOARD_WIDTH && circX + i >= 0) {
+						board.grid[circY - x][circX + i] = ColoredChar('*', color);
+					}
+				}
+			}
+			x++;
+			if (p < 0) {
+				p += 2 * x + 1;
+			}
+			else {
+				y--;
+				p += 2 * (x - y) + 1;
+			}
+		}
+	}
+
 	void getFigure(int id) const override {
 		cout << id << " circle (" << circX << ", " << circY << ") radius " << circRadius << " " << color << endl;
+	}
+
+	bool getFilledState() const override {
+		return fill;
 	}
 };
 
@@ -186,17 +294,17 @@ class System {
 public:
 	map<int, unique_ptr<Figure>> figures;
 	void run(Board& board);
-	bool isNumeric(const std::string& str);
+	bool isNumeric(const string& str);
 private:
 	void printCommands();
-	void draw(Board& board); // 4 figures done
-	void list(); // done
-	void shapes(); // done
+	void draw(Board& board); 
+	void list(); 
+	void shapes(); 
 	void add(Board& board, stringstream& sss);
-	void undo(Board& board); // done
-	void clear(Board& board); // done
-	void save(); // done
-	void load(); // done
+	void undo(Board& board); 
+	void clear(Board& board); 
+	void save(stringstream& sss);
+	void load(stringstream& sss);
 	void paint();
 	bool checkCircle(Board& board);
 	bool checkSquare(Board& board);
@@ -206,6 +314,7 @@ private:
 	void cleanData();
 	string input;
 	string command;
+	string fill;
 	string figure;
 	string strX, strY;
 	string color;
@@ -319,7 +428,14 @@ void System::shapes() {
 
 void System::draw(Board& board) {
 	for (const auto& pair : figures) {
-		pair.second->draw(board);
+		if (pair.second->getFilledState())
+		{
+			pair.second->drawFilled(board);
+		}
+		else
+		{
+			pair.second->drawFilled(board);
+		}
 	}
 	board.print();
 }
@@ -356,7 +472,20 @@ void System::clear(Board& board) {
 }
 
 void System::add(Board& board, stringstream& sss) {
-	sss >> figure >> strX >> strY;
+	sss >> fill;
+	if (fill == "fill") {
+		sss >> figure >> strX >> strY;
+	}
+	else if (fill == "triangle" || fill == "square" || fill == "rectangle" || fill == "circle") {
+		figure = fill;
+		fill.clear();
+		sss >> strX >> strY;
+	}
+	else 
+	{
+		cout << "The input is incorrect.\n\n";
+	}
+
 	if (isNumeric(strX) && isNumeric(strY)) {
 		x = stoi(strX);
 		y = stoi(strY);
@@ -364,10 +493,15 @@ void System::add(Board& board, stringstream& sss) {
 	if (x >= 0 && y >= 0) {
 		if (figure == "triangle") {
 			sss >> triangleHeight >> color;
-			if (isNumeric(triangleHeight) && isFigureNew()) {
+			if (isNumeric(triangleHeight)) {
 				doubleTrigHeight = stoi(triangleHeight);
-				if (checkTriangle(board)) {
-					figures[figures.size() + 1] = make_unique<Triangle>(x, y, doubleTrigHeight, color);
+				if (checkTriangle(board) && isFigureNew()) {
+					if (fill.empty()) {
+						figures[figures.size() + 1] = make_unique<Triangle>(x, y, doubleTrigHeight, color, false);
+					}
+					else {
+						figures[figures.size() + 1] = make_unique<Triangle>(x, y, doubleTrigHeight, color, true);
+					}
 					cout << "\nThe figure was added\n\n";
 				}
 				else {
@@ -383,7 +517,12 @@ void System::add(Board& board, stringstream& sss) {
 			if (isNumeric(squareLength)) {
 				doubleSqrLength = stoi(squareLength);
 				if (checkSquare(board) && isFigureNew()) {
-					figures[figures.size() + 1] = make_unique<Square>(x, y, doubleSqrLength, color);
+					if (fill.empty()) {
+						figures[figures.size() + 1] = make_unique<Square>(x, y, doubleSqrLength, color, false);
+					}
+					else {
+						figures[figures.size() + 1] = make_unique<Square>(x, y, doubleSqrLength, color, true);
+					}
 					cout << "\nThe figure was added\n\n";
 				}
 				else {
@@ -401,7 +540,12 @@ void System::add(Board& board, stringstream& sss) {
 				doubleRectHeight = stoi(rectangleHeight);
 				if (checkRectangle(board) && isFigureNew())
 				{
-					figures[figures.size() + 1] = make_unique<Rectangle>(x, y, doubleRectWidth, doubleRectHeight, color);
+					if (fill.empty()) {
+						figures[figures.size() + 1] = make_unique<Rectangle>(x, y, doubleRectWidth, doubleRectHeight, color, false);
+					}
+					else {
+						figures[figures.size() + 1] = make_unique<Rectangle>(x, y, doubleRectWidth, doubleRectHeight, color, true);
+					}
 					cout << "\nThe figure was added\n\n";
 				}
 				else {
@@ -417,7 +561,12 @@ void System::add(Board& board, stringstream& sss) {
 			if (isNumeric(circleRadius)) {
 				doubleCircRadius = stoi(circleRadius);
 				if (checkCircle(board) && isFigureNew()) {
-					figures[figures.size() + 1] = make_unique<Circle>(x, y, doubleCircRadius, color);
+					if (fill.empty()) {
+						figures[figures.size() + 1] = make_unique<Circle>(x, y, doubleCircRadius, color, false);
+					}
+					else {
+						figures[figures.size() + 1] = make_unique<Circle>(x, y, doubleCircRadius, color, true);
+					}
 					cout << "\nThe figure was added\n\n";
 				}
 				else {
@@ -435,7 +584,8 @@ void System::add(Board& board, stringstream& sss) {
 	cleanData();
 }
 
-void System::save() {
+void System::save(stringstream& sss) {
+	sss >> filePath;
 	ofstream outFile(filePath);
 
 	if (!outFile) {
@@ -464,7 +614,8 @@ void System::save() {
 	cout << "Board was saved to file: " << filePath << "\n\n";
 }
 
-void System::load() {
+void System::load(stringstream& sss) {
+	sss >> filePath;
 	ifstream infile(filePath);
 
 	if (!infile) {
@@ -481,27 +632,55 @@ void System::load() {
 		string shape;
 		int x, y;
 
-		forLoad >> id >> shape >> x >> y;
+		forLoad >> fill;
+		if (fill == "fill") {
+			forLoad >> shape >> x >> y;
+		}
+		else if (fill == "triangle" || fill == "square" || fill == "rectangle" || fill == "circle") {
+			shape = fill;
+			fill.clear();
+			forLoad >> x >> y;
+		}
 
 		if (shape == "circle") {
 			int radius;
 			forLoad >> radius >> color;
-			figures[id] = make_unique<Circle>(x, y, radius, color);
+			if (fill.empty()) {
+				figures[id] = make_unique<Circle>(x, y, radius, color, false);
+			}
+			else {
+				figures[id] = make_unique<Circle>(x, y, radius, color, true);
+			}
 		}
 		else if (shape == "square") {
 			int sideLength;
 			forLoad >> sideLength >> color;
-			figures[id] = make_unique<Square>(x, y, sideLength, color);
+			if (fill.empty()) {
+				figures[id] = make_unique<Square>(x, y, sideLength, color, false);
+			}
+			else {
+				figures[id] = make_unique<Square>(x, y, sideLength, color, true);
+			}
 		}
 		else if (shape == "triangle") {
 			int height;
 			forLoad >> height >> color;
-			figures[id] = make_unique<Triangle>(x, y, height, color);
+			if (fill.empty()) {
+				figures[id] = make_unique<Triangle>(x, y, height, color, false);
+			}
+			else {
+				figures[id] = make_unique<Triangle>(x, y, height, color, true);
+			}
 		}
 		else if (shape == "rectangle") {
 			int width, height;
 			forLoad >> width >> height >> color;
-			figures[id] = make_unique<Rectangle>(x, y, width, height, color);
+			if (fill.empty()) {
+				figures[id] = make_unique<Rectangle>(x, y, width, height, color, false);
+			}
+			else {
+				figures[id] = make_unique<Rectangle>(x, y, width, height, color, true);
+			}
 		}
 	}
 	infile.close();
@@ -543,12 +722,10 @@ void System::run(Board& board) {
 			clear(board);
 		}
 		else if (command == "save"){
-			sss >> filePath;
-			save();
+			save(sss);
 		}
 		else if (command == "load") {
-			sss >> filePath;
-			load();
+			load(sss);
 		}
 		else if (command == "select"){
 			sss >> strX >> strY;

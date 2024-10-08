@@ -1,4 +1,4 @@
-1 circle 7 7 7 cyan
-2 triangle 3 3 3 green
-3 rectangle 5 5 5 5 red
-4 square 4 4 4 yellow
+1 circle 5 5 5 blue
+2 triangle 15 15 7 cyan
+3 square 9 9 3 magenta
+4 rectangle 5 5 10 7 green
