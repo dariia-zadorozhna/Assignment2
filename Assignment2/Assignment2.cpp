@@ -49,11 +49,14 @@ public:
 
 class Figure {
 public:
-	virtual void draw(Board& board) const = 0;
-	virtual void drawFilled(Board& board) const = 0;
+	virtual void draw(Board& board) = 0;
+	virtual void drawFilled(Board& board) = 0;
 	virtual void getFigure(int id) const = 0;
 	virtual bool getFilledState() const = 0;
+	virtual const vector<pair<int, int>>& getPoints() const = 0;
 	virtual ~Figure() = default;
+protected:
+	vector<pair<int, int>> points;
 };
 
 class Triangle: public Figure {
@@ -64,7 +67,7 @@ public:
 
 	Triangle(int coordinateX, int coordinateY, double Height, string Color, bool Fill) : trigX(coordinateX), trigY(coordinateY), trigHeight(Height), color(Color), fill(Fill) {}
 
-	void draw(Board& board) const override {
+	void draw(Board& board) override {
 		if (trigHeight <= 0) return;
 		for (int i = 0; i < trigHeight; ++i) {
 			int leftMost = trigX - i; 
@@ -74,10 +77,12 @@ public:
 				if (leftMost >= 0 && leftMost < board.BOARD_WIDTH)
 				{
 					board.grid[posY][leftMost] = ColoredChar('*', color);
+					points.emplace_back(leftMost, posY);
 				}
 				if (rightMost >= 0 && rightMost < board.BOARD_WIDTH && leftMost != rightMost)
 				{
 					board.grid[posY][rightMost] = ColoredChar('*', color);
+					points.emplace_back(rightMost, posY);
 				}
 			}
 		}
@@ -89,7 +94,7 @@ public:
 		}
 	}
 
-	void drawFilled(Board& board) const override {
+	void drawFilled(Board& board) override {
 		if (trigHeight <= 0) return; 
 
 		for (int i = 0; i < trigHeight; ++i) {
@@ -101,6 +106,7 @@ public:
 				for (int x = leftMost; x <= rightMost; ++x) {
 					if (x >= 0 && x < board.BOARD_WIDTH) {
 						board.grid[posY][x] = ColoredChar('*', color);
+						points.emplace_back(x, posY);
 					}
 				}
 			}
@@ -112,6 +118,7 @@ public:
 				int baseX = trigX - trigHeight + 1 + j;
 				if (baseX >= 0 && baseX < board.BOARD_WIDTH) {
 					board.grid[baseY][baseX] = ColoredChar('*', color);
+					points.emplace_back(baseX, baseY);
 				}
 			}
 		}
@@ -125,6 +132,10 @@ public:
 		return fill;
 	}
 
+	const vector<pair<int, int>>& getPoints() const override {
+		return points; 
+	}
+
 };
 
 class Square : public Figure {
@@ -135,24 +146,29 @@ public:
 
 	Square(int coordinateX, int coordinateY, double sideLength, string Color, bool Fill) : sqrX(coordinateX), sqrY(coordinateY), sqrSideLength(sideLength), color(Color), fill(Fill) {}
 
-	void draw(Board& board) const override {
+	void draw(Board& board) override {
 		for (int i = 0; i < sqrSideLength; ++i) {
 			if (sqrX + i < board.BOARD_WIDTH) {
 				board.grid[sqrY][sqrX + i] = ColoredChar('*', color);
 				board.grid[sqrY + sqrSideLength - 1][sqrX + i] = ColoredChar('*', color);
+				points.emplace_back(sqrX+i, sqrY);
+				points.emplace_back(sqrX + i, sqrY + sqrSideLength - 1);
 			}
 			if (sqrY + i < board.BOARD_HEIGHT) {
 				board.grid[sqrY + i][sqrX] = ColoredChar('*', color);
 				board.grid[sqrY + i][sqrX + sqrSideLength - 1] = ColoredChar('*', color);
+				points.emplace_back(sqrX, sqrY + i);
+				points.emplace_back(sqrX + sqrSideLength - 1, sqrY + i);
 			}
 		}
 	}
 
-	void drawFilled(Board& board) const override {
+	void drawFilled(Board& board) override {
 		for (int i = 0; i < sqrSideLength; ++i) {
 			for (int j = 0; j < sqrSideLength; ++j) {
 				if ((sqrX + j < board.BOARD_WIDTH) && (sqrY + i < board.BOARD_HEIGHT)) {
 					board.grid[sqrY + i][sqrX + j] = ColoredChar('*', color);
+					points.emplace_back(sqrX+j, sqrY+i);
 				}
 			}
 		}
@@ -165,6 +181,10 @@ public:
 	bool getFilledState() const override {
 		return fill;
 	}
+
+	const vector<pair<int, int>>& getPoints() const override {
+		return points;
+	}
 };
 
 class Rectangle : public Figure {
@@ -175,26 +195,31 @@ public:
 
 	Rectangle(int coordinateX, int coordinateY, double width, double height, string Color, bool Fill) : rectX(coordinateX), rectY(coordinateY), rectWidth(width), rectHeight(height), color(Color), fill(Fill){}
 
-	void draw(Board& board) const override {
+	void draw(Board& board) override {
 		for (int i = 0; i < rectWidth; ++i) {
 			if (rectX + i < board.BOARD_WIDTH) {
 				board.grid[rectY][rectX + i] = ColoredChar('*', color);
 				board.grid[rectY + rectHeight - 1][rectX + i] = ColoredChar('*', color);
+				points.emplace_back(rectX + i, rectY);
+				points.emplace_back(rectX + i, rectY + rectHeight - 1);
 			}
 		}
 		for (int j = 0; j < rectHeight; ++j) {
 			if (rectY + j < board.BOARD_HEIGHT) {
 				board.grid[rectY + j][rectX] = ColoredChar('*', color);
 				board.grid[rectY + j][rectX + rectWidth - 1] = ColoredChar('*', color);
+				points.emplace_back(rectX, rectY+j);
+				points.emplace_back(rectX + rectWidth - 1, rectY + j);
 			}
 		}
 	}
 
-	void drawFilled(Board& board) const override {
+	void drawFilled(Board& board) override {
 		for (int j = 0; j < rectHeight; ++j) {
 			for (int i = 0; i < rectWidth; ++i) {
 				if ((rectX + i < board.BOARD_WIDTH) && (rectY + j < board.BOARD_HEIGHT)) {
 					board.grid[rectY + j][rectX + i] = ColoredChar('*', color);
+					points.emplace_back(rectX+i, rectY +j);
 				}
 			}
 		}
@@ -207,6 +232,10 @@ public:
 	bool getFilledState() const override {
 		return fill;
 	}
+
+	const vector<pair<int, int>>& getPoints() const override {
+		return points;
+	}
 };
 
 class Circle : public Figure {
@@ -217,20 +246,44 @@ public:
 
 	Circle(int coordinateX, int coordinateY, double radius, string Color, bool Fill) : circX(coordinateX), circY(coordinateY), circRadius(radius), color(Color), fill(Fill) {}
 
-	void draw(Board& board) const override {
+	void draw(Board& board) override {
 		int x = 0;
 		int y = circRadius;
 		int p = 1 - circRadius; 
 
 		while (x <= y) {
-			if (circX + x < board.BOARD_WIDTH && circY + y < board.BOARD_HEIGHT) board.grid[circY + y][circX + x] = ColoredChar('*', color);
-			if (circX - x >= 0 && circY + y < board.BOARD_HEIGHT) board.grid[circY + y][circX - x] = ColoredChar('*', color);
-			if (circX + x < board.BOARD_WIDTH && circY - y >= 0) board.grid[circY - y][circX + x] = ColoredChar('*', color);
-			if (circX - x >= 0 && circY - y >= 0) board.grid[circY - y][circX - x] = ColoredChar('*', color);
-			if (circX + y < board.BOARD_WIDTH && circY + x < board.BOARD_HEIGHT) board.grid[circY + x][circX + y] = ColoredChar('*', color);
-			if (circX - y >= 0 && circY + x < board.BOARD_HEIGHT) board.grid[circY + x][circX - y] = ColoredChar('*', color);
-			if (circX + y < board.BOARD_WIDTH && circY - x >= 0) board.grid[circY - x][circX + y] = ColoredChar('*', color);
-			if (circX - y >= 0 && circY - x >= 0) board.grid[circY - x][circX - y] = ColoredChar('*', color);
+			if (circX + x < board.BOARD_WIDTH && circY + y < board.BOARD_HEIGHT) {
+				board.grid[circY + y][circX + x] = ColoredChar('*', color);
+				points.emplace_back(circX + x, circY + y); 
+			}
+			if (circX - x >= 0 && circY + y < board.BOARD_HEIGHT) {
+				board.grid[circY + y][circX - x] = ColoredChar('*', color);
+				points.emplace_back(circX - x, circY + y); 
+			}
+			if (circX + x < board.BOARD_WIDTH && circY - y >= 0) {
+				board.grid[circY - y][circX + x] = ColoredChar('*', color);
+				points.emplace_back(circX + x, circY - y); 
+			}
+			if (circX - x >= 0 && circY - y >= 0) {
+				board.grid[circY - y][circX - x] = ColoredChar('*', color);
+				points.emplace_back(circX - x, circY - y); 
+			}
+			if (circX + y < board.BOARD_WIDTH && circY + x < board.BOARD_HEIGHT) {
+				board.grid[circY + x][circX + y] = ColoredChar('*', color);
+				points.emplace_back(circX + y, circY + x); 
+			}
+			if (circX - y >= 0 && circY + x < board.BOARD_HEIGHT) {
+				board.grid[circY + x][circX - y] = ColoredChar('*', color);
+				points.emplace_back(circX - y, circY + x); 
+			}
+			if (circX + y < board.BOARD_WIDTH && circY - x >= 0) {
+				board.grid[circY - x][circX + y] = ColoredChar('*', color);
+				points.emplace_back(circX + y, circY - x); 
+			}
+			if (circX - y >= 0 && circY - x >= 0) {
+				board.grid[circY - x][circX - y] = ColoredChar('*', color);
+				points.emplace_back(circX - y, circY - x); 
+			}
 
 			x++;
 
@@ -244,7 +297,7 @@ public:
 		}
 	}
 
-	void drawFilled(Board& board) const override {
+	void drawFilled(Board& board) override {
 		int x = 0;
 		int y = circRadius;
 		int p = 1 - circRadius;
@@ -254,9 +307,11 @@ public:
 				if (circY + y < board.BOARD_HEIGHT) {
 					if (circX + i < board.BOARD_WIDTH && circX + i >= 0) {
 						board.grid[circY + y][circX + i] = ColoredChar('*', color);
+						points.emplace_back(circX + i, circY + y);
 					}
 					if (circX + i < board.BOARD_WIDTH && circX + i >= 0) {
 						board.grid[circY - y][circX + i] = ColoredChar('*', color);
+						points.emplace_back(circX + i, circY - y);
 					}
 				}
 			}
@@ -264,9 +319,11 @@ public:
 				if (circY + x < board.BOARD_HEIGHT) {
 					if (circX + i < board.BOARD_WIDTH && circX + i >= 0) {
 						board.grid[circY + x][circX + i] = ColoredChar('*', color);
+						points.emplace_back(circX + i, circY + x);
 					}
 					if (circX + i < board.BOARD_WIDTH && circX + i >= 0) {
 						board.grid[circY - x][circX + i] = ColoredChar('*', color);
+						points.emplace_back(circX + i, circY - x);
 					}
 				}
 			}
@@ -287,6 +344,10 @@ public:
 
 	bool getFilledState() const override {
 		return fill;
+	}
+
+	const vector<pair<int, int>>& getPoints() const override {
+		return points;
 	}
 };
 
@@ -364,6 +425,7 @@ bool System::isFigureNew() {
 void System::cleanData() {
 	x = y = -1;
 	color = "";
+	strX, strY = "";
 	triangleHeight = squareLength = rectangleWidth = rectangleHeight = circleRadius = "";
 }
 
@@ -732,10 +794,10 @@ void System::run(Board& board) {
 			if (strY == "") {
 				if (isNumeric(strX)) {
 					ID = stoi(strX);
-
 					for (const auto& pair : figures) {
 						if (pair.first == ID) {
 							pair.second->getFigure(ID);
+							cout << endl;
 						}
 					}
 				}
@@ -745,9 +807,24 @@ void System::run(Board& board) {
 					x = stoi(strX); 
 					y = stoi(strY);
 				}
+				bool found = false;
 				for (auto it = figures.rbegin(); it != figures.rend(); ++it) {
 					const auto& figure = it->second;
-					// logic to ckeck points
+					const auto& points = figure->getPoints();
+					for (const auto& point : points) {
+						if (point.first == x && point.second == y) {
+							found = true;
+							figure->getFigure(it->first);
+							cout << endl;
+							break;
+						}
+					}
+					if (found) {
+						break; 
+					}
+				}
+				if (!found) {
+					cout << "Point (" << x << ", " << y << ") not found in any figure." << endl;
 				}
 			}
 		}
