@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <unordered_set>
 using namespace std;
 
 #define reset "\033[0m"
@@ -61,6 +62,7 @@ public:
 	virtual void drawFilled(Board& board) = 0;
 	virtual void getFigure(int id) const = 0;
 	virtual bool getFilledState() const = 0;
+	virtual void setColor(string newColor) = 0;
 	virtual const vector<pair<int, int>>& getPoints() const = 0;
 	virtual ~Figure() = default;
 protected:
@@ -144,6 +146,10 @@ public:
 		return points; 
 	}
 
+	void setColor(string newColor) override {
+		color = newColor;
+	}
+
 };
 
 class Square : public Figure {
@@ -192,6 +198,10 @@ public:
 
 	const vector<pair<int, int>>& getPoints() const override {
 		return points;
+	}
+
+	void setColor(string newColor) override {
+		color = newColor;
 	}
 };
 
@@ -243,6 +253,10 @@ public:
 
 	const vector<pair<int, int>>& getPoints() const override {
 		return points;
+	}
+
+	void setColor(string newColor) override {
+		color = newColor;
 	}
 };
 
@@ -357,6 +371,10 @@ public:
 	const vector<pair<int, int>>& getPoints() const override {
 		return points;
 	}
+
+	void setColor(string newColor) override {
+		color = newColor;
+	}
 };
 
 class System {
@@ -364,6 +382,7 @@ public:
 	map<int, unique_ptr<Figure>> figures;
 	void run(Board& board);
 	bool isNumeric(const string& str);
+	bool isValidColor(const string& color);
 private:
 	void printCommands();
 	void draw(Board& board); 
@@ -375,8 +394,8 @@ private:
 	void save(stringstream& sss);
 	void load(stringstream& sss);
 	Figure* select(stringstream& sss);
-	void remove(Board& board, Figure* figure);
-	void edit(Board& board, Figure* figure, stringstream& sss);
+	void remove(Figure* figure);
+	void edit(Figure* figure, stringstream& sss);
 	void paint(Figure* figure, stringstream& sss);
 	bool checkCircle(Board& board);
 	bool checkSquare(Board& board);
@@ -489,6 +508,12 @@ bool System::isNumeric(const std::string& str) {
 		}
 	}
 	return true;
+}
+
+bool System::isValidColor(const string& color) {
+	unordered_set<string> validColors = { "red", "green", "blue", "yellow", "black", "white" };
+
+	return validColors.find(color) != validColors.end();
 }
 
 void System::shapes() {
@@ -777,6 +802,7 @@ Figure* System::select(stringstream& sss) {
 			for (const auto& point : points) {
 				if (point.first == x && point.second == y) {
 					found = true;
+					ID = it->first;
 					figure->getFigure(it->first);
 					cout << endl;
 					return figure.get();
@@ -793,28 +819,13 @@ Figure* System::select(stringstream& sss) {
 	}
 }
 
-void System::remove(Board& board, Figure* figure) {
-	if (ID != 0) {
+void System::remove(Figure* figure) {
 		figure->getFigure(ID);
 		cout << "was removed\n\n";
 		figures.erase(ID);
-	}
-	else {
-		for (auto it = figures.begin(); it != figures.end(); ) {
-			if (it->second.get() == figure) {
-				ID = it->first;
-				figure->getFigure(ID);
-				cout << "was removed\n\n";
-				it = figures.erase(it);
-			}
-			else {
-				++it;
-			}
-		}
-	}
 }
 
-void System::edit(Board& board, Figure* figure, stringstream& sss) {
+void System::edit(Figure* figure, stringstream& sss) {
 	string par1;
 	string par2;
 	int intPar1, intPar2;
@@ -884,7 +895,15 @@ void System::edit(Board& board, Figure* figure, stringstream& sss) {
 }
 
 void System::paint(Figure* figure, stringstream& sss) {
-
+	string newColor;
+	sss >> newColor;
+	if (isValidColor(newColor)) {
+		figure->setColor(newColor);
+		figure->getFigure(ID);
+	}
+	else {
+		cout << "\nThere is no such color\n\n";
+	}
 }
 
 void System::run(Board& board) {
@@ -933,11 +952,11 @@ void System::run(Board& board) {
 			sss >> command;
 			if (command == "remove")
 			{
-				remove(board, figure);
+				remove(figure);
 			}
 			else if (command == "edit")
 			{
-				edit(board, figure, sss);
+				edit(figure, sss);
 			}
 			else if (command == "paint")
 			{
