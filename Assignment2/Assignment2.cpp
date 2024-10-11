@@ -44,6 +44,14 @@ public:
 			cout << "\n";
 		}
 	}
+
+	void cleanBoard() {
+		for (int i = 0; i < BOARD_HEIGHT; ++i) {
+			for (int j = 0; j < BOARD_WIDTH; ++j) {
+				grid[i][j] = ColoredChar(' ', "white");
+			}
+		}
+	}
 };
 
 
@@ -366,7 +374,10 @@ private:
 	void clear(Board& board); 
 	void save(stringstream& sss);
 	void load(stringstream& sss);
-	void paint();
+	Figure* select(stringstream& sss);
+	void remove(Board& board, Figure* figure);
+	void edit(Board& board, Figure* figure, stringstream& sss);
+	void paint(Figure* figure, stringstream& sss);
 	bool checkCircle(Board& board);
 	bool checkSquare(Board& board);
 	bool checkRectangle(Board& board);
@@ -496,7 +507,7 @@ void System::draw(Board& board) {
 		}
 		else
 		{
-			pair.second->drawFilled(board);
+			pair.second->draw(board);
 		}
 	}
 	board.print();
@@ -515,21 +526,12 @@ void System::list() {
 void System::undo(Board& board) {
 	int lastId = figures.size();
 	figures.erase(lastId);
-	for (int i = 0; i < board.BOARD_HEIGHT; ++i) {
-		for (int j = 0; j < board.BOARD_WIDTH; ++j) {
-			board.grid[i][j] = ColoredChar(' ', "white");
-		}
-	}
-	cout << "The last added shape was removed from the blackboard\n\n";
+	cout << "\nLast figure was erased\n\n";
 }
 
 void System::clear(Board& board) {
 	figures.clear();
-	for (int i = 0; i < board.BOARD_HEIGHT; ++i) {
-		for (int j = 0; j < board.BOARD_WIDTH; ++j) {
-			board.grid[i][j] = ColoredChar(' ', "white");
-		}
-	}
+	board.cleanBoard();
 	cout << "The blackboard was cleared\n\n";
 }
 
@@ -643,7 +645,6 @@ void System::add(Board& board, stringstream& sss) {
 	else {
 		cout << "\nThe input is incorrect\n\n";
 	}
-	cleanData();
 }
 
 void System::save(stringstream& sss) {
@@ -749,13 +750,148 @@ void System::load(stringstream& sss) {
 	cout << "Board was loaded from " << filePath << endl;
 }
 
-void System::paint() {
+Figure* System::select(stringstream& sss) {
+	sss >> strX >> strY;
+	if (strY == "") {
+		if (isNumeric(strX)) {
+			ID = stoi(strX);
+			for (const auto& pair : figures) {
+				if (pair.first == ID) {
+					const auto& figure = pair.second;
+					figure->getFigure(ID);
+					cout << endl;
+					return figure.get();
+				}
+			}
+		}
+	}
+	else {
+		if (isNumeric(strX) && isNumeric(strY)) {
+			x = stoi(strX);
+			y = stoi(strY);
+		}
+		bool found = false;
+		for (auto it = figures.rbegin(); it != figures.rend(); ++it) {
+			const auto& figure = it->second;
+			const auto& points = figure->getPoints();
+			for (const auto& point : points) {
+				if (point.first == x && point.second == y) {
+					found = true;
+					figure->getFigure(it->first);
+					cout << endl;
+					return figure.get();
+					break;
+				}
+			}
+			if (found) {
+				break;
+			}
+		}
+		if (!found) {
+			cout << "Point (" << x << ", " << y << ") not found in any figure." << endl;
+		}
+	}
+}
+
+void System::remove(Board& board, Figure* figure) {
+	if (ID != 0) {
+		figure->getFigure(ID);
+		cout << "was removed\n\n";
+		figures.erase(ID);
+	}
+	else {
+		for (auto it = figures.begin(); it != figures.end(); ) {
+			if (it->second.get() == figure) {
+				ID = it->first;
+				figure->getFigure(ID);
+				cout << "was removed\n\n";
+				it = figures.erase(it);
+			}
+			else {
+				++it;
+			}
+		}
+	}
+}
+
+void System::edit(Board& board, Figure* figure, stringstream& sss) {
+	string par1;
+	string par2;
+	int intPar1, intPar2;
+	sss >> par1 >> par2;
+	if (auto* circle = dynamic_cast<Circle*>(figure)) {
+		if (par2.empty()) {
+			if (isNumeric(par1)) {
+				intPar1 = stoi(par1);
+				circle->circRadius = intPar1;
+				cout << "\nRadius of circle was changed\n\n";
+			}
+			else {
+				cout << "\nParameter is not numeric\n\n";
+			}
+		}
+		else {
+			cout << "\nWrong number of arguments\n\n";
+		}
+	}
+	else if (auto* rectangle = dynamic_cast<Rectangle*>(figure)) {
+		if (!par1.empty() && !par2.empty()) {
+			if (isNumeric(par1) || isNumeric(par2)) {
+				intPar1 = stoi(par1);
+				intPar2 = stoi(par2);
+				rectangle->rectWidth = intPar1;
+				rectangle->rectHeight = intPar2;
+				cout << "\nWidth and height of rectangle were changed\n\n";
+			}
+			else {
+				cout << "\nParameter is not numeric\n\n";
+			}
+		}
+		else {
+			cout << "\nWrong number of arguments\n\n";
+		}
+	}
+	else if (auto* triangle = dynamic_cast<Triangle*>(figure)) {
+		if (par2.empty()) {
+			if (isNumeric(par1)) {
+				intPar1 = stoi(par1);
+				triangle->trigHeight = intPar1;
+				cout << "\nHeight of triangle was changed\n\n";
+			}
+			else {
+				cout << "\nParameter is not numeric\n\n";
+			}
+		}
+		else {
+			cout << "\nWrong number of arguments\n\n";
+		}
+	}
+	else if (auto* square = dynamic_cast<Square*>(figure)) {
+		if (par2.empty()) {
+			if (isNumeric(par1)) {
+				intPar1 = stoi(par1);
+				square->sqrSideLength = intPar1;
+				cout << "\nSide length of square was changed\n\n";
+			}
+			else {
+				cout << "\nParameter is not numeric\n\n";
+			}
+		}
+		else {
+			cout << "\nWrong number of arguments\n\n";
+		}
+	}
+}
+
+void System::paint(Figure* figure, stringstream& sss) {
 
 }
 
 void System::run(Board& board) {
 	while (true)
 	{
+		cleanData();
+		board.cleanBoard();
 		printCommands();
 		getline(cin, input);
 		stringstream sss(input);
@@ -790,46 +926,27 @@ void System::run(Board& board) {
 			load(sss);
 		}
 		else if (command == "select"){
-			sss >> strX >> strY;
-			if (strY == "") {
-				if (isNumeric(strX)) {
-					ID = stoi(strX);
-					for (const auto& pair : figures) {
-						if (pair.first == ID) {
-							pair.second->getFigure(ID);
-							cout << endl;
-						}
-					}
-				}
+			const auto& figure = select(sss);
+			command.clear();
+			getline(cin, input);
+			stringstream sss(input);
+			sss >> command;
+			if (command == "remove")
+			{
+				remove(board, figure);
 			}
-			else{
-				if (isNumeric(strX) && isNumeric(strY)) {
-					x = stoi(strX); 
-					y = stoi(strY);
-				}
-				bool found = false;
-				for (auto it = figures.rbegin(); it != figures.rend(); ++it) {
-					const auto& figure = it->second;
-					const auto& points = figure->getPoints();
-					for (const auto& point : points) {
-						if (point.first == x && point.second == y) {
-							found = true;
-							figure->getFigure(it->first);
-							cout << endl;
-							break;
-						}
-					}
-					if (found) {
-						break; 
-					}
-				}
-				if (!found) {
-					cout << "Point (" << x << ", " << y << ") not found in any figure." << endl;
-				}
+			else if (command == "edit")
+			{
+				edit(board, figure, sss);
 			}
-		}
-		else if (command == "paint") {
-			//paint();
+			else if (command == "paint")
+			{
+				paint(figure, sss);
+			}
+			else if (command == "move")
+			{
+
+			}
 		}
 		else if (command == "exit") {
 			return;
