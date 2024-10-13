@@ -38,6 +38,16 @@ public:
 
 	Board() : grid(BOARD_HEIGHT, vector<ColoredChar>(BOARD_WIDTH, ColoredChar(' ', "white"))) {}
 	void print() {
+		for (int j = 0; j < BOARD_WIDTH; ++j) {
+			grid[0][j] = ColoredChar('*', "white");               
+			grid[BOARD_HEIGHT - 1][j] = ColoredChar('*', "white"); 
+		}
+
+		for (int i = 0; i < BOARD_HEIGHT; ++i) {
+			grid[i][0] = ColoredChar('*', "white");               
+			grid[i][BOARD_WIDTH - 1] = ColoredChar('*', "white"); 
+		}
+
 		for (auto& row : grid) {
 			for (ColoredChar clrCh : row) {
 				cout << clrCh.getAnsiColorCode(clrCh.color) << clrCh.character << reset;
@@ -406,6 +416,7 @@ public:
 	bool isValidColor(const string& color);
 private:
 	void printCommands();
+	void printSelectCommands();
 	void draw(Board& board); 
 	void list(); 
 	void shapes(); 
@@ -415,7 +426,7 @@ private:
 	void save(stringstream& sss);
 	void load(stringstream& sss);
 	Figure* select(stringstream& sss);
-	void remove(Figure* figure);
+	void remove(Figure* figure);	
 	void edit(Figure* figure, stringstream& sss);
 	void paint(Figure* figure, stringstream& sss);
 	void move(Figure* figure, stringstream& sss, Board& board);
@@ -991,6 +1002,7 @@ void System::run(Board& board) {
 		else if (command == "select"){
 			const auto& figure = select(sss);
 			command.clear();
+			printSelectCommands();
 			getline(cin, input);
 			stringstream sss(input);
 			sss >> command;
@@ -1031,8 +1043,16 @@ void System::printCommands() {
 		<< "clear - to remove all shapes from blackboard\n"
 		<< "save - to save the blackboard to the file\n"
 		<< "load - to load the blackboard from the file\n"
-		<< "paint - to paint the selected shape\n"
+		<< "select - to select the shape by id or coordinates\n"
 		<< "exit - to leave\n\n";
+}
+
+void System::printSelectCommands() {
+	cout << "Choose a command:\n"
+		<< "remove - to remove the selected shape\n"
+		<< "edit - to edit the parameters of the selected shape\n"
+		<< "paint - to change the color of the selected shape\n"
+		<< "move - to change the coordinates of the selected shape\n\n";
 }
 
 int main()
