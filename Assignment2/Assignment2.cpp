@@ -63,6 +63,7 @@ public:
 	virtual void getFigure(int id) const = 0;
 	virtual bool getFilledState() const = 0;
 	virtual void setColor(string newColor) = 0;
+	virtual void setCoordinates(int x, int y) = 0;
 	virtual const vector<pair<int, int>>& getPoints() const = 0;
 	virtual ~Figure() = default;
 protected:
@@ -150,6 +151,11 @@ public:
 		color = newColor;
 	}
 
+	void setCoordinates(int x, int y) override {
+		trigX = x;
+		trigY = y;
+	}
+
 };
 
 class Square : public Figure {
@@ -202,6 +208,11 @@ public:
 
 	void setColor(string newColor) override {
 		color = newColor;
+	}
+
+	void setCoordinates(int x, int y) override {
+		sqrX = x;
+		sqrY = y;
 	}
 };
 
@@ -257,6 +268,11 @@ public:
 
 	void setColor(string newColor) override {
 		color = newColor;
+	}
+
+	void setCoordinates(int x, int y) override {
+		rectX = x;
+		rectY = y;
 	}
 };
 
@@ -375,6 +391,11 @@ public:
 	void setColor(string newColor) override {
 		color = newColor;
 	}
+
+	void setCoordinates(int x, int y) override {
+		circX = x;
+		circY = y;
+	}
 };
 
 class System {
@@ -397,6 +418,8 @@ private:
 	void remove(Figure* figure);
 	void edit(Figure* figure, stringstream& sss);
 	void paint(Figure* figure, stringstream& sss);
+	void move(Figure* figure, stringstream& sss, Board& board);
+
 	bool checkCircle(Board& board);
 	bool checkSquare(Board& board);
 	bool checkRectangle(Board& board);
@@ -906,6 +929,27 @@ void System::paint(Figure* figure, stringstream& sss) {
 	}
 }
 
+void System::move(Figure* figure, stringstream& sss, Board& board) {
+	string coordX, coordY;
+	int x = -1;
+	int y = -1;
+	sss >> coordX >> coordY;
+	if (isNumeric(coordX) && isNumeric(coordY)) {
+		x = stoi(coordX);
+		y = stoi(coordY);
+		if (x >= 0 && y >= 0 && x <= board.BOARD_WIDTH && y <= board.BOARD_HEIGHT) {
+			figure->setCoordinates(x, y);
+		}
+		else {
+			cout << "\nCoordinates are not valid\n\n";
+		}
+	}
+	else {
+		cout << "\nCoordinates are not valid\n\n";
+		
+	}
+}
+
 void System::run(Board& board) {
 	while (true)
 	{
@@ -964,7 +1008,7 @@ void System::run(Board& board) {
 			}
 			else if (command == "move")
 			{
-
+				move(figure, sss, board);
 			}
 		}
 		else if (command == "exit") {
